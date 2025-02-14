@@ -22,8 +22,6 @@ import java.util.Objects;
 
 @Slf4j
 public class Main {
-    private static final String CACHE_FILE = "runelite-versions.json";
-
     public static void main(String[] args) throws Exception {
         var githubToken = System.getenv("GITHUB_TOKEN");
         if (githubToken == null) {
@@ -46,7 +44,7 @@ public class Main {
         }
 
         Cache cache = null;
-        var file = new File(CACHE_FILE);
+        var file = new File(System.getenv("CACHE_FILE"));
 
         var objectMapper = new ObjectMapper();
         if (file.exists()) {
@@ -92,6 +90,9 @@ public class Main {
             var dispatch = new WorkflowDispatch(repoRef, Map.of("download", String.join(",", toDownload)));
             triggerGithubPipeline(repoUri, githubToken, workflowId, dispatch);
         }
+
+        cache = new Cache(stableVersion, snapshotJarVersion, launcherVersion);
+        objectMapper.writeValue(file, cache);
     }
 
     private static String getLatestSnapshotVersion() throws IOException {

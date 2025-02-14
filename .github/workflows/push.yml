@@ -3,7 +3,7 @@ name: Build and run
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: '*/15 * * * *'
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      cache-key: runelite-versions
+      CACHE_FILE: cache-file.json
 
     steps:
       - uses: actions/checkout@v3
@@ -27,35 +27,32 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # get cache from previous run ID
-      - uses: actions/cache/restore@v4
-        id: cache-restore
-        with:
-          path: ${{ env.cache-key }}.json
-          key: ${{ env.cache-key }}
+      - name: Download JSON from Azure Blob Storage
+        run: |
+          az storage blob download \
+            --name ${{ env.CACHE_FILE }} \
+            --file ${{ env.CACHE_FILE }} \
+            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+            --sas-token ${{ secrets.AZURE_STORAGE_SAS_TOKEN }} || echo "No cache found"
 
       - name: Run application
         run: mvn compile exec:java -Dexec.mainClass=dev.burak.rlversionchecker.Main
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_DISPATCH_PAT }}
           AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
           AZURE_URL: ${{ secrets.AZURE_URL }}
           AZURE_PIPELINE_ID: ${{ secrets.AZURE_PIPELINE_ID }}
+          TRIGGER_WORKFLOW_ID: ${{ secrets.TRIGGER_WORKFLOW_ID }}
+          REPO_URI: ${{ secrets.TRIGGER_REPO_URI }}
+          REPO_REF: main
 
-      - name: Delete Previous Cache
-        if: ${{ steps.cache-restore.outputs.cache-hit }}
-        continue-on-error: true
+      - name: Upload JSON to Azure Blob Storage
         run: |
-          gh extension install actions/gh-actions-cache
-          gh actions-cache delete "${{ env.cache-key }}" --confirm
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TRIGGER_REPO_URI: ${{ secrets.TRIGGER_REPO_URI }}
-          TRIGGER_WORKFLOW_ID: ${{ secrets.REPO_URI }}
-          REPO_REF: master
-
-      - uses: actions/cache/save@v4
-        with:
-          path: ${{ env.cache-key }}.json
-          key: ${{ env.cache-key }}
+          az storage blob upload \
+            --name ${{ env.CACHE_FILE }} \
+            --file ${{ env.CACHE_FILE }} \
+            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+            --sas-token ${{ secrets.AZURE_STORAGE_SAS_TOKEN }}
