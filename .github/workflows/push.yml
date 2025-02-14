@@ -34,7 +34,7 @@ jobs:
             --file ${{ env.CACHE_FILE }} \
             --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
             --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --sas-token ${{ secrets.AZURE_STORAGE_SAS_TOKEN }} || echo "No cache found"
+            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} || echo "No cache found"
 
       - name: Run application
         run: mvn compile exec:java -Dexec.mainClass=dev.burak.rlversionchecker.Main
@@ -55,4 +55,4 @@ jobs:
             --file ${{ env.CACHE_FILE }} \
             --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
             --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --sas-token ${{ secrets.AZURE_STORAGE_SAS_TOKEN }}
+            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
