@@ -55,4 +55,5 @@ jobs:
             --file ${{ env.CACHE_FILE }} \
             --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
             --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
+            --overwrite true
