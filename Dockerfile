@@ -1,3 +1,3 @@
-FROM openjdk:21
+FROM openjdk:21-alpine
 COPY target/runelite-version-checker-1.0-SNAPSHOT.jar app.jar
 ENTRYPOINT java -jar app.jar
