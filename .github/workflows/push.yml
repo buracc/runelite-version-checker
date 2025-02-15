@@ -4,16 +4,9 @@ on:
   push:
     branches: [ main ]
 
-permissions:
-  contents: read
-  actions: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    env:
-      CACHE_FILE: cache-file.json
 
     steps:
       - uses: actions/checkout@v3
