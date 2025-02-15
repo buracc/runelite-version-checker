@@ -1,11 +1,8 @@
 name: Build and run
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
-  schedule:
-    - cron: '*/15 * * * *'
 
 permissions:
   contents: read
@@ -38,7 +35,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build . -t ghcr.io/${{ github.repository }}/healthy-bot:latest
+        run: docker build . -t ghcr.io/${{ github.repository }}/runelite-version-checker:latest
 
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}/healthy-bot:latest
+        run: docker push ghcr.io/${{ github.repository }}/runelite-version-checker:latest
