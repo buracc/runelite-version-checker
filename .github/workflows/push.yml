@@ -27,33 +27,21 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Download JSON from Azure Blob Storage
-        run: |
-          az storage blob download \
-            --name ${{ env.CACHE_FILE }} \
-            --file ${{ env.CACHE_FILE }} \
-            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
-            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} || echo "No cache found"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-      - name: Run application
-        run: mvn compile exec:java -Dexec.mainClass=dev.burak.rlversionchecker.Main
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_DISPATCH_PAT }}
-          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
-          AZURE_URL: ${{ secrets.AZURE_URL }}
-          AZURE_PIPELINE_ID: ${{ secrets.AZURE_PIPELINE_ID }}
-          TRIGGER_WORKFLOW_ID: ${{ secrets.TRIGGER_WORKFLOW_ID }}
-          REPO_URI: ${{ secrets.TRIGGER_REPO_URI }}
-          REPO_REF: main
+      - name: Build with Gradle
+        run: ./gradlew build
 
-      - name: Upload JSON to Azure Blob Storage
-        run: |
-          az storage blob upload \
-            --name ${{ env.CACHE_FILE }} \
-            --file ${{ env.CACHE_FILE }} \
-            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
-            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
-            --overwrite true
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build . -t ghcr.io/${{ github.repository }}/healthy-bot:latest
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/healthy-bot:latest
