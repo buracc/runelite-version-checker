@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import dev.burak.rlversionchecker.model.Bootstrap;
 import dev.burak.rlversionchecker.model.Cache;
 import dev.burak.rlversionchecker.model.Metadata;
-import dev.burak.rlversionchecker.model.Project;
 import dev.burak.rlversionchecker.model.Release;
 import dev.burak.rlversionchecker.model.WorkflowDispatch;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +15,11 @@ import okhttp3.RequestBody;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 @Slf4j
 public class Main {
@@ -98,7 +99,7 @@ public class Main {
     private static String getLatestSnapshotVersion() throws IOException {
         var response = new OkHttpClient()
                 .newCall(new Request.Builder()
-                        .url("https://raw.githubusercontent.com/runelite/runelite/master/pom.xml")
+                        .url("https://raw.githubusercontent.com/runelite/runelite/master/gradle.properties")
                         .build())
                 .execute();
 
@@ -111,10 +112,10 @@ public class Main {
             throw new RuntimeException("Empty response");
         }
 
-        var mapper = new XmlMapper();
-        var pom = mapper.readValue(body.string(), Project.class);
+        var properties = new Properties();
+        properties.load(new StringReader(body.string()));
         response.close();
-        return pom.version();
+        return properties.getProperty("project.build.version");
     }
 
     private static String getLatestStableVersion() throws IOException {
